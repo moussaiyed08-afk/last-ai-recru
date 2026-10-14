@@ -1,0 +1,9 @@
+# Dépendances Node.js (dossier très lourd, pas besoin de le versionner)
+node_modules/
+
+# Fichier .env (contient tes mots de passe - NE JAMAIS commiter !)
+.env
+
+# Dossier généré par Prisma (sera regénéré par npm install)
+# Note : certains projets versionne ce dossier, c'est un choix d'équipe
+# node_modules/.prisma/

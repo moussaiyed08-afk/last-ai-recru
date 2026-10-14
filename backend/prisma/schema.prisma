@@ -1,0 +1,74 @@
+// ============================================================
+// FICHIER : prisma/schema.prisma
+// ============================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================
+// MODÈLES
+// ============================================================
+
+model Job {
+  id          Int       @id @default(autoincrement())
+  title       String
+  company     String
+  description String    @db.Text
+  type        String    @default("CDI")         // CDI, CDD, Stage, Freelance, Alternance
+  contract    String    @default("Temps plein") // Temps plein, Temps partiel, Hybride, Télétravail
+  location    String    @default("")
+  status      String    @default("live")        // "live" | "draft" | "closed"
+  createdAt   DateTime  @default(now())
+  publishedAt DateTime?                         // date de mise en ligne (sert au badge "New" pendant 24 h)
+
+  // RELATION : Le job appartient à un recruteur (User)
+  recruiterId Int
+  recruiter   User      @relation(fields: [recruiterId], references: [id])
+
+  // RELATION : Un Job peut être lié à plusieurs Candidatures
+  candidatures Candidature[]
+}
+
+model User {
+  id         Int      @id @default(autoincrement())
+  email      String   @unique
+  password   String
+  role       String   // "CANDIDAT" ou "RECRUTEUR"
+
+  nom        String
+  prenom     String
+
+  entreprise String?  // Uniquement pour le RECRUTEUR
+  enChomage  Boolean? // Uniquement pour le CANDIDAT
+
+  createdAt  DateTime @default(now())
+
+  // RELATIONS
+  jobs         Job[]          // offres créées (recruteur)
+  candidatures Candidature[]  // candidatures envoyées (candidat)
+}
+
+model Candidature {
+  id        Int      @id @default(autoincrement())
+  fileName  String
+  cvContent String   @db.Text
+  score     Int?
+  status    String   @default("nouveau") // nouveau | vu | entretien | accepte | refuse
+  createdAt DateTime @default(now())
+
+  // Relation avec le job
+  jobId     Int
+  job       Job      @relation(fields: [jobId], references: [id])
+
+  // Relation avec le candidat (null pour les anciennes candidatures)
+  candidatId Int?
+  candidat   User?   @relation(fields: [candidatId], references: [id], onDelete: SetNull)
+
+  @@unique([jobId, candidatId])
+}
